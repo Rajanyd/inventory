@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adjust Stock</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- CSRF Token from Django template -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+<body>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        
+        button, input, textarea, select {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        button {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+    </style>       
+    <div class="container">
+        <h1>Adjust Stock</h1>
+        <form id="adjust-stock-form">
+            <label for="item-id">Item:</label>
+            <select id="item-id" required></select>
+
+            <label for="quantity-change">Quantity Change:</label>
+            <input type="number" id="quantity-change" placeholder="Quantity Change" required>
+
+            <label for="reason">Reason:</label>
+            <textarea id="reason" placeholder="Reason for adjustment" required></textarea>
+
+            <button type="submit">Adjust Stock</button>
+        </form>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('jwt_token');
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const headers = {
+            Authorization: `Bearer ${token}`,
+            'X-CSRFToken': csrfToken
+        };
+
+        // Fetch inventory items
+        axios.get('/inventory/inventory-items/', { headers })
+            .then(response => {
+                console.log('Inventory items:', response.data);
+                const itemSelect = document.getElementById('item-id');
+                response.data.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.category;
+                    option.textContent = item.name;
+                    itemSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching inventory items:', error));
+
+            // Handle form submission
+            document.getElementById('adjust-stock-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const itemId = document.getElementById('item-id').value;  // Get the item id
+                const quantityChange = document.getElementById('quantity-change').value;
+                const reason = document.getElementById('reason').value;
+
+                axios.post('/inventory/stock-adjustments/', {
+                    item: itemId,  // Send item id
+                    quantity_change: quantityChange,
+                    reason: reason,
+                }, { headers })
+                    .then(response => {
+                        alert('Stock adjusted successfully');
+                        window.location.href = '/inventory/admin/stock-adjustments/';
+                    })
+                    .catch(error => {
+                        console.error('Error adjusting stock:', error);
+                        alert('Failed to adjust stock. Please try again.');
+                    });
+            });
+            
+            
+    </script>
+</body>
+</html>

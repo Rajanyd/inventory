@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+        .stats, .management {
+            margin: 20px 0;
+        }
+        .stats p, .management button {
+            margin: 10px 0;
+        }
+        .management button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #007BFF;
+            color: white;
+        }
+        .management button:hover {
+            opacity: 0.9;
+        }
+        .go-back-btn {
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .go-back-btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        <div class="button-group">
+            <button class="go-back-btn" id="go-back-btn">Go Back</button>
+        </div>
+        <div id="dashboard-content">
+            <p>Welcome to the Admin Dashboard.</p>
+
+            <div class="stats">
+                <p>Total Categories: <span id="category-count">0</span></p>
+                <p>Total Inventory Items: <span id="inventory-item-count">0</span></p>
+                <p>Total Stock Adjustments: <span id="stock-adjustment-count">0</span></p>
+                <p>Low Stock Items (below 10): <span id="low-stock-items">0</span></p>
+            </div>
+
+            <div class="management">
+                <h2>Manage Inventory</h2>
+                <button onclick="window.location.href='/inventory/admin/categories/'">Manage Categories</button>
+                <button onclick="window.location.href='/inventory/admin/inventory-items/'">Manage Inventory Items</button>
+                <button onclick="window.location.href='/inventory/admin/stock-adjustments/'">Manage Stock Adjustments</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check authentication
+        const token = localStorage.getItem('jwt_token');
+
+        if (!token) {
+            alert('You are not logged in. Redirecting to login page.');
+            window.location.href = '/inventory/login/';
+        }
+
+        // Configure Axios for authentication
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        // Fetch dashboard data
+        axios.get('/inventory/api/dashboard-stats/')
+            .then(response => {
+                const { categories, inventoryItems, stockAdjustments } = response.data;
+                document.getElementById('category-count').textContent = categories;
+                document.getElementById('inventory-item-count').textContent = inventoryItems;
+                document.getElementById('stock-adjustment-count').textContent = stockAdjustments;
+            })
+            .catch(error => {
+                console.error('Error fetching dashboard data:', error);
+                const dashboardContent = document.getElementById('dashboard-content');
+                if (error.response && error.response.status === 401) {
+                    dashboardContent.innerHTML = '<p>Unauthorized. Please log in again.</p>';
+                    window.location.href = '/inventory/login/';
+                } else {
+                    dashboardContent.innerHTML = '<p>Failed to load dashboard data. Please try again later.</p>';
+                }
+            });
+
+        // Handle "Go Back" button
+        const goBackBtn = document.getElementById('go-back-btn');
+        if (goBackBtn) {
+            goBackBtn.addEventListener('click', () => {
+                window.history.back();
+            });
+        }
+    </script>
+</body>
+</html>

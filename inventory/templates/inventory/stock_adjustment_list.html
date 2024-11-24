@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Adjustments</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Stock Adjustments</h1>
+        <button id="adjust-stock-btn" class="btn">Adjust Stock</button>
+        <button id="go-back-btn" class="btn">Go Back</button>
+        <table id="stock-adjustment-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Item</th>
+                    <th>Quantity Change</th>
+                    <th>Reason</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="stock-adjustment-list"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Fetch stock adjustments with authentication token
+        const token = localStorage.getItem('jwt_token');
+        if (!token) {
+            alert('You are not logged in');
+            window.location.href = 'inventory//login';  // Redirect to login if no token
+        }
+
+        axios.get('/inventory/stock-adjustments/', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => {
+            const adjustments = response.data;
+            const stockAdjustmentList = document.getElementById('stock-adjustment-list');
+            stockAdjustmentList.innerHTML = '';  // Clear the table body
+            adjustments.forEach(adjustment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${adjustment.id}</td>
+                    <td>${adjustment.item.name}</td>
+                    <td>${adjustment.quantity_change}</td>
+                    <td>${adjustment.reason}</td>
+                    <td>
+                        <button onclick="deleteStockAdjustment(${adjustment.id})">Delete</button>
+                    </td>
+                `;
+                stockAdjustmentList.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching stock adjustments', error);
+            alert('Failed to fetch stock adjustments. Please try again.');
+        });
+
+        // Handle stock adjustment redirect
+        document.getElementById('adjust-stock-btn').addEventListener('click', () => {
+            window.location.href = '/inventory/stock-adjustments/adjust/';
+        });
+
+        // Delete stock adjustment with authentication
+        function deleteStockAdjustment(id) {
+            axios.delete(`/inventory/stock-adjustments/${id}/`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                alert('Stock adjustment deleted');
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Error deleting stock adjustment', error);
+                alert('Failed to delete stock adjustment. Please try again.');
+            });
+        }
+
+        // Go back button functionality
+        document.getElementById('go-back-btn').addEventListener('click', () => {
+            window.history.back();
+        });
+    </script>
+
+    <style>
+        /* Simple CSS for better styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 80%;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        button {
+            padding: 6px 12px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #c82333;
+        }
+
+        /* Responsive design for small screens */
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                padding: 15px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            .btn {
+                font-size: 14px;
+            }
+        }
+    </style>
+</body>
+</html>

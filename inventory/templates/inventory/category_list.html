@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        table th {
+            background: #007BFF;
+            color: #fff;
+        }
+        table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        #create-category-btn {
+            background: #007BFF;
+            color: white;
+            float: right;
+        }
+        .go-back-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Categories</h1>
+        <div class="button-group">
+            <button class="go-back-btn" id="go-back-btn">Go Back</button>
+            <button id="create-category-btn">Create Category</button>
+        </div>
+        <table id="category-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="category-list"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('jwt_token');
+
+        if (!token) {
+            alert('You are not logged in. Redirecting to login page.');
+            window.location.href = '/inventory/login/';
+        }
+
+        // Configure Axios to include the Authorization header for all requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fetch categories
+            axios.get('/inventory/categories/')
+                .then(response => {
+                    const categories = response.data;
+                    const categoryList = document.getElementById('category-list');
+                    categoryList.innerHTML = ''; 
+                    categories.forEach(category => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${category.id}</td>
+                            <td>${category.name}</td>
+                            <td>${category.description}</td>
+                            <td>
+                                <button onclick="deleteCategory(${category.id})">Delete</button>
+                            </td>
+                        `;
+                        categoryList.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching categories', error);
+                    if (error.response && error.response.status === 401) {
+                        alert('Session expired. Please log in again.');
+                        window.location.href = '/inventory/login/';
+                    }
+                });
+
+            // Handle category creation
+            const createCategoryBtn = document.getElementById('create-category-btn');
+            if (createCategoryBtn) {
+                createCategoryBtn.addEventListener('click', () => {
+                    console.log('Create category button clicked');
+                    window.location.href = '/inventory/categories/create/';
+                });
+            }
+
+            // Handle "Go Back" button
+            const goBackBtn = document.getElementById('go-back-btn');
+            if (goBackBtn) {
+                goBackBtn.addEventListener('click', () => {
+                    window.history.back();
+                });
+            }
+        });
+
+        // Delete category
+        function deleteCategory(id) {
+            axios.delete(`/inventory/categories/${id}/`)
+                .then(response => {
+                    alert('Category deleted');
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Error deleting category', error);
+                    if (error.response && error.response.status === 401) {
+                        alert('Session expired. Please log in again.');
+                        window.location.href = '/inventory/login/';
+                    }
+                });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Inventory Item</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        /* Styling for Create Inventory Item */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button[type="submit"] {
+            background: #007BFF;
+            color: white;
+        }
+        button[type="submit"]:hover {
+            opacity: 0.9;
+        }
+        .go-back-btn {
+            background: #6c757d;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .go-back-btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create Inventory Item</h1>
+        <button class="go-back-btn" id="go-back-btn">Go Back</button>
+        <form id="create-inventory-item-form">
+            <label for="name">Item Name</label>
+            <input type="text" id="name" name="name" required>
+            <label for="category">Category</label>
+            <select id="category" name="category" required>
+                <!-- Categories will be loaded here -->
+            </select>
+            <label for="quantity">Quantity</label>
+            <input type="number" id="quantity" name="quantity" required>
+            <label for="unit_price">Unit Price</label>
+            <input type="number" id="unit_price" name="unit_price" step="0.01" required>
+            <label for="description">Description</label>
+            <textarea id="description" name="description" required></textarea>
+            <button type="submit">Create Inventory Item</button>
+        </form>
+    </div>
+
+    <script>
+        // Authentication check
+        const token = localStorage.getItem('jwt_token');
+        if (!token) {
+            alert('You are not logged in. Redirecting to login page.');
+            window.location.href = '/inventory/login/';
+        }
+
+        // Configure Axios for authentication
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        // Fetch categories for the dropdown
+        axios.get('/inventory/categories/')
+            .then(response => {
+                const categories = response.data;
+                const categorySelect = document.getElementById('category');
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    categorySelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching categories:', error);
+                alert('Failed to load categories. Please try again later.');
+            });
+
+        // Handle form submission
+        document.getElementById('create-inventory-item-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const category = document.getElementById('category').value;
+            const quantity = document.getElementById('quantity').value;
+            const unitPrice = document.getElementById('unit_price').value;
+            const description = document.getElementById('description').value;
+
+            axios.post('/inventory/inventory-items/', {
+                name: name,
+                category: category,
+                quantity: quantity,
+                unit_price: unitPrice,
+                description: description
+            })
+            .then(response => {
+                alert('Inventory item created successfully.');
+                window.location.href = '/inventory/admin/inventory-items/';
+            })
+            .catch(error => {
+                console.error('Error creating inventory item:', error);
+                alert('Failed to create the inventory item. Please try again.');
+            });
+        });
+
+        // Handle "Go Back" button
+        document.getElementById('go-back-btn').addEventListener('click', () => {
+            window.history.back();
+        });
+    </script>
+</body>
+</html>
